@@ -1,0 +1,39 @@
+name: Deploy changes
+on:
+  push:
+    branches:
+      - master
+
+
+jobs:
+  deploy-changes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout service
+        uses: actions/checkout@v2
+
+      - name: Setup JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: '18'
+          distribution: 'temurin'
+
+      - name: Run gradle tests
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-disabled: true
+          arguments: check
+
+      - name: Run terraform tests
+        run: echo "Running terraform tests"
+
+      - name: Run helm tests
+        run: echo "Running helm tests"
+
+      - name: Deploy changes
+        run: echo "Deploying changes"
+
+      - name: Ensure roll-out
+        run: echo "Ensuring rollout"
+
+
