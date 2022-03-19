@@ -14,8 +14,8 @@ jobs:
 
       - name: Setup JDK
         uses: actions/setup-java@v2
-        with:
-          java-version: '18'
+        with:k
+          java-version: '17'
           distribution: 'temurin'
 
       - name: Run gradle tests
