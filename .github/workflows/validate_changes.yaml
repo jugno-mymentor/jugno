@@ -20,6 +20,8 @@ jobs:
           cache-disabled: true
           arguments: check
 
+  #Todo: Auto merge is running soon after the validation
+  #Todo: It should run after the manual code review
   automerge:
     runs-on: ubuntu-latest
     needs:
@@ -28,7 +30,7 @@ jobs:
       - name: Merge changes to trunk
         uses: reitermarkus/automerge@v1.5.2
         with:
-          token: ${{  secrets.MY_GITHUB_TOKEN }}
+          token: ${{  }}
           merge-method: rebase
           do-not-merge-labels: never-merge
           required-labels: automerge
