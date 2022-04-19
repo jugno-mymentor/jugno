@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Spring logging:
+  The configuration here can be done (or overridden) by setting the logging properties in application.properties
+  I think it would be a better practive to do it there and this file may be deleted.
+  Otherwise if direct configuration is needed then this file can be copied from spring docs and pasted here in
+  resources. Spring recognizes this file name (logback-spring.xml) and uses it.
+
+  https://springframework.guru/using-logback-spring-boot/
+  https://docs.spring.io/spring-boot/docs/2.1.18.RELEASE/reference/html/boot-features-logging.html-->
+<!--TODO-logging:
+      1. configure logger. yaml properties can be used to do that, this standard template need not be modified i think
+         (see https://stackoverflow.com/questions/68428370/how-to-add-default-logback-xml-to-spring-boot-project)
+      2. also do profile based config (different for dev/qa/prod
+      3. https://www.baeldung.com/spring-boot-logging
+      -->
+<configuration>
+  <include resource="org/springframework/boot/logging/logback/default.xml"/>
+  <include resource="org/springframework/boot/logging/logback/console-appender.xml" />
+  <include resource="org/springframework/boot/logging/logback/file-appender.xml" />
+  <root level="INFO">
+    <appender-ref ref="CONSOLE" />
+  </root>
+  <logger name="org.springframework.web" level="DEBUG"/>
+</configuration>
