@@ -1,4 +1,4 @@
-package com.jugno;
+package com.edtech.jugno;
 
 //import org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy;
 //import org.hibernate.boot.model.naming.Identifier;

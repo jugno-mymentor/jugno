@@ -3,13 +3,13 @@
 
 # Whitelist the files that should be part of the respository.
 !.git/
-!.github/
-!src/
-!src/*
-src/main/main.iml
-src/test/test.iml
-!.gitignore
+!.git/**
 !.gitattributes
+!.github/
+!.github/**
+!.gitignore
+!src/
+!src/**
 !LICENSE
 !pom.xml
 !README.md
