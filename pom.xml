@@ -2,29 +2,451 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
   <modelVersion>4.0.0</modelVersion>
+
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
     <version>2.6.4</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
-  <groupId>com.jugno</groupId>
+
+  <groupId>com.edtech</groupId>
   <artifactId>jugno</artifactId>
-  <version>1.0-SNAPSHOT</version>
-  <name>jugno</name>
-  <description>jugno</description>
+  <version>1.0.0-SNAPSHOT</version>
+
+  <!-- Projects tend to have conversational names, beyond the artifactId. The Sun engineers did not refer to -->
+  <!-- their project as "java-1.5", but rather just called it "Tiger". Here is where to set that value.-->
+  <name>Jugoo</name>
+
+  <!-- A short, human readable description of the project. Although this should not replace formal documentation,-->
+  <!-- A quick comment to any readers of the POM is always helpful.-->
+  <description>TODO.</description>
+
+  <organization>
+    <name>EdTech</name>
+    <url>www.todo.com</url>
+  </organization>
+
+  <!-- URL: The project's home page.-->
+  <url>http://www.todo.com/</url>
+
+  <!-- inceptionYear: The year the project was first created.-->
+  <inceptionYear>2022</inceptionYear>
+
+  <!-- Each packaging contains a list of goals to bind to a particular phase. Focus on jar package bc that's -->
+  <!-- what we will use 90% of time. Apart from standard packaging options (jar, war etc) custom packaging schemes -->
+  <!-- can be added if needed.-->
+  <packaging>jar</packaging>
+
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <java.version>11</java.version>
-    <flyway.user>user_flyway</flyway.user>
-    <flyway.password>flyway</flyway.password>
-    <flyway.schemas>schema_jugno</flyway.schemas>
+    <maven.compiler.source>11</maven.compiler.source>
+    <maven.compiler.target>11</maven.compiler.target>
+
+    <!-- String - Sets the maximum size, in megabytes, of the memory allocation pool, ex. "128", "128m" if -->
+    <!-- fork is set to true.-->
+    <!--<maven.compiler.maxmem>2048m</maven.compiler.maxmem>-->
+
+    <!-- String - Initial size, in megabytes, of the memory allocation pool, ex. "64", "64m" if fork is -->
+    <!-- set to true-->
+    <!--<maven.compiler.meminitial>64m</maven.compiler.meminitial>-->
+
+    <!--<flyway.user>user_flyway</flyway.user>-->
+    <!--<flyway.password>flyway</flyway.password>-->
+    <!--<flyway.schemas>schema_jugno</flyway.schemas>-->
+
+    <my.dirName.lib>lib</my.dirName.lib>
+    <my.fullyQualifiedNameOfMainClass>com.edtech.jugno.JugnoApplication</my.fullyQualifiedNameOfMainClass>
   </properties>
 
-  <dependencies>
+  <profiles>
+    <profile>
+      <id>prod</id>
+      <activation>
+        <property>
+          <!-- In case multiple profiles are active (multiple profiles meet the activation criteria) then the ones
+               which are defined later take precedence over the ones defined earlier
+               (independent of their profile id and activation order).-->
+          <name>build_env</name>
+          <value>prod</value>
+        </property>
+        <os>
+          <family>unix</family>
+        </os>
+      </activation>
+      <build>
+      </build>
+      <dependencies>
+        <dependency>
+          <groupId>org.postgresql</groupId>
+          <artifactId>postgresql</artifactId>
+          <scope>runtime</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <!--  This profile will be used by Github Action and run as a result of merging of PRs: -->
+      <!--  1. Clean build test package (create docker image) and deploy (publish image to github packages).-->
+      <!--  2. Tests will use embedded state stores i.e. persistent stores like embedded in memory H2 and/or mongo -->
+      <!--  3. There is no need to run install phase because our artifact is a docker image not a jar. -->
+      <!--  4. Deploy will publish the image tagged as as a new snapshot release to github packages. We will discuss -->
+      <!--     the release process and then finalize how builds are to be promoted from snapshot to RC to QA to GA. -->
+      <!--  5. Also, we will use Maven-release plugin when we finalize the release process. -->
+      <id>cicd</id>
+      <activation>
+        <property>
+          <!-- In case multiple profiles are active (multiple profiles meet the activation criteria) then the ones -->
+          <!-- which are defined later take precedence over the ones defined earlier. -->
+          <name>build_env</name>
+          <value>cicd</value>
+        </property>
+        <os>
+          <family>unix</family>
+        </os>
+      </activation>
+      <build>
+      </build>
+      <dependencies>
+        <dependency>
+          <groupId>com.h2database</groupId>
+          <artifactId>h2</artifactId>
+          <scope>runtime</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <!--https://maven.apache.org/guides/mini/guide-building-for-different-environments.html-->
+    <profile>
+      <!--  This profile will be used by devs. -->
+      <!--  1. Deploy should publish to a different registry not the one used by cicd or the release process. -->
+      <!--  2. Tests will use embedded state stores i.e. persistent stores like embedded in memory H2 and/or mongo -->
+      <!--  3. There is no need to run install phase because our artifact is a docker image not a jar. -->
+      <!--  4. What about the run script for the container? It is dependent on environment i.e. dev, qa, or prod. -->
+      <!--     But the image we build is also dependent on environment (maven profiles). How does this all fit together?  -->
+      <id>dev</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+        <os>
+          <family>Windows</family>
+        </os>
+      </activation>
+      <build>
+        <!-- TODO-Builds -->
+      </build>
+      <dependencies>
+        <dependency>
+          <groupId>com.h2database</groupId>
+          <artifactId>h2</artifactId>
+          <scope>runtime</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
 
+  <build>
+    <!-- Default phase or goal to execute. Phases are bound to goals so no need to specify goal.-->
+    <!-- Goals are of form <plugin:goal>-->
+    <defaultGoal>package</defaultGoal>
+    <finalName>${project.artifactId}-${project.version}</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+
+          <!-- There are more config elements but I am keeping only the non-typical ones here for reference. -->
+
+          <!--MavenArchiveConfiguration	-	The archive configuration to use. See Maven Archiver Reference.-->
+          <archive>
+
+            <!-- Whether recreating the archive is forced (default) or not. Setting this option to false, means that
+                 the archiver should compare the timestamps of included files with the timestamp of the target
+                 archive and rebuild the archive, only if the latter timestamp precedes the former timestamps.
+                 Checking for timestamps will typically offer a performance gain (in particular, if the following
+                 steps in a build can be suppressed, if an archive isn't recreated) on the cost that you get
+                 inaccurate results from time to time. In particular, removal of source files won't be detected.-->
+            <!-- An archiver doesn't necessarily support checks for uptodate. If so, setting this option to true
+                 will simply be ignored.-->
+            <!--The default value is true.	boolean	2.2-->
+            <!--<forced>true</forced>-->
+
+            <!--Use this to override the auto created pom.properties file (only if addMavenDescriptor is set to true)	File	2.3-->
+            <!--<pomPropertiesFile/>-->
+
+            <!--With this you can supply your own manifest file.	File-->
+            <!--<manifestFile/>	-->
+
+            <manifest>
+
+              <!--Whether to create a Class-Path manifest entry. The default value is false.	boolean-->
+              <!-- Note: We did not have to create any classpath value to be used for the manifest. I think the -->
+              <!--       value is calculated automatically by maven using the dependency resolver. -->
+              <!--       Also we are setting this to false because we have included the spirng-boot-maven plug -->
+              <!--       which creates the classpath itself.  -->
+              <addClasspath>false</addClasspath>
+
+              <!--If the manifest will contain these entries:-->
+              <!--Created-By: Maven Archiver ${maven-archiver.version}-->
+              <!--Build-Jdk-Spec: ${java.specification.version}-->
+              <!--Since 3.5.0, the default value of Created-By entry can be overridden using MavenArchiver.setCreatedBy(...) API.-->
+              <!--The default value is true.	boolean	3.4.0-->
+              <!--<addDefaultEntries>true</addDefaultEntries>-->
+
+              <!--If the manifest will contain these entries:-->
+              <!--Implementation-Title: ${project.name}-->
+              <!--Implementation-Version: ${project.version}-->
+              <!--Implementation-Vendor: ${project.organization.name}-->
+              <!--The default value is false.	boolean	2.1 and 2.6-->
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+
+              <!--If the manifest will contain these entries:-->
+              <!--Specification-Title: ${project.name}-->
+              <!--Specification-Version: ${project.artifact.selectedVersion.majorVersion}.${project.artifact.selectedVersion.minorVersion}-->
+              <!--Specification-Vendor: ${project.organization.name}-->
+              <!--The default value is false.	boolean	2.1-->
+              <!--<addDefaultSpecificationEntries>false</addDefaultSpecificationEntries>-->
+
+              <!--If the manifest will contain these entries:-->
+              <!--Build-Tool: ${maven.build.version}-->
+              <!--Build-Jdk: ${java.version} (${java.vendor})-->
+              <!--Build-Os:  ${os.name} (${os.version}; (${os.arch})-->
+              <!--The default value is false.	boolean	3.4.0-->
+              <!--<addBuildEnvironmentEntries>true</addBuildEnvironmentEntries>-->
+
+              <!--The type of layout to use when formatting entries in the created Class-Path. Valid values are: simple, repository (the same as a Maven classpath layout) and custom.-->
+              <!--Note: If you specify a type of custom you must also set customClasspathLayout. The default value is simple.	String	2.4-->
+              <!--<classpathLayoutType></classpathLayoutType>	-->
+
+              <!--A text that will be prefixed to all your Class-Path entries. The default value is "".	String-->
+              <!--<classpathPrefix>${my.dirName.lib}/</classpathPrefix>-->
+
+              <!--The layout expression to use when the layout type set in classpathLayoutType has the value custom. Expressions will be evaluated against the following ordered list of classpath-related objects:-->
+              <!--The current Artifact instance, if one exists.-->
+              <!--The current ArtifactHandler instance from the artifact above.-->
+              <!--Note: If you specify a layout type of custom you must set this layout expression.	String	2.4-->
+              <!--<customClasspathLayout></customClasspathLayout>-->
+
+              <!--The Main-Class manifest entry.	String-->
+              <mainClass>${my.fullyQualifiedNameOfMainClass}</mainClass>
+
+              <!--Package manifest entry.	String-->
+              <packageName>com.edtech.jugno</packageName>
+
+              <!--Whether to use unique timestamp Snapshot versions rather than -SNAPSHOT versions. The default value is true.-->
+              <!--<useUniqueVersions>true</useUniqueVersions>	-->
+
+            </manifest>
+
+            <!--<manifestEntries>-->
+            <!--  <key>value</key>-->
+            <!--</manifestEntries>-->
+
+            <!--<manifestSections>-->
+            <!--  <manifestSection>-->
+            <!--  <name/>-->
+            <!--  <manifestEntries>-->
+            <!--    <key>value</key>-->
+            <!--  </manifestEntries>-->
+            <!--  <manifestSection/>-->
+            <!--</manifestSections>-->
+          </archive>
+
+          <!--File - Directory containing the classes and resource files that should be packaged into the JAR.-->
+          <!--Default value is: ${project.build.outputDirectory}.-->
+          <!--<classesDirectory>${project.build.outputDirectory}</classesDirectory>-->
+
+          <!--File	-	Directory containing the generated JAR.-->
+          <!--Default value is: ${project.build.directory}.-->
+          <!--Optional Parameters-->
+          <!--Name	Type	Since	Description-->
+          <!--<outputDirectory>${project.build.directory}</outputDirectory>-->
+
+          <!--String	-	Classifier to add to the artifact generated. If given, the artifact will be attached as a supplemental artifact. If not given this will create the main artifact which is the default behavior. If you try to do that a second time without using a classifier the build will fail.-->
+          <!--<classifier></classifier>-->
+
+          <!--String[]	-	List of files to exclude. Specified as fileset patterns which are relative to the input directory whose contents is being packaged into the JAR.-->
+          <!--<excludes name=""/>-->
+
+          <!--boolean	-	Require the jar plugin to build a new JAR even if none of the contents appear to have changed. By default, this plugin looks to see if the output jar exists and inputs have not changed. If these conditions are true, the plugin skips creation of the jar. This does not work when other plugins, like the maven-shade-plugin, are configured to post-process the jar. This plugin can not detect the post-processing, and so leaves the post-processed jar in place. This can lead to failures when those plugins do not expect to find their own output as an input. Set this parameter to true to avoid these problems by forcing this plugin to recreate the jar every time.-->
+          <!--Starting with 3.0.0 the property has been renamed from jar.forceCreation to maven.jar.forceCreation.-->
+          <!--Default value is: false.-->
+          <!--User property is: maven.jar.forceCreation.-->
+          <!--<forceCreation>false</forceCreation>-->
+
+          <!--String[]	-	List of files to include. Specified as fileset patterns which are relative to the input directory whose contents is being packaged into the JAR.-->
+          <!--<includes name=""/>-->
+
+          <!--String	3.2.0	Timestamp for reproducible output archive entries, either formatted as ISO 8601 yyyy-MM-dd'T'HH:mm:ssXXX or as an int representing seconds since the epoch (like SOURCE_DATE_EPOCH).-->
+          <!--Default value is: ${project.build.outputTimestamp}.-->
+          <!--<outputTimestamp>${maven.build.timestamp}</outputTimestamp>-->
+
+          <!--boolean	-	Skip creating empty archives.-->
+          <!--Default value is: false.-->
+          <!--<skipIfEmpty>false</skipIfEmpty>-->
+
+        </configuration>
+      </plugin>
+
+      <!--use GITHUB TOKEN as password for gcr authentication in maven settings.xml -->
+      <!--https://medium.com/@clarkbw/environment-variables-for-maven-settings-8280d8a809f9-->
+      <!-- Container repo Authentication options. -->
+      <!--https://github.com/spotify/dockerfile-maven/blob/master/docs/authentication.md-->
+      <!-- To run this image do: docker run -p <any port of choice>:8080 ${project.build.finalName}.jar -->
+      <plugin>
+        <groupId>com.spotify</groupId>
+        <artifactId>dockerfile-maven-plugin</artifactId>
+        <version>1.4.13</version>
+        <configuration>
+          <repository>ghcr.io/jugno-mymentor/jugno</repository>
+          <tag>${project.version}</tag>
+          <buildArgs>
+            <JAR_FILE_DIR>target</JAR_FILE_DIR>
+            <JAR_FILE_NAME>${project.build.finalName}.jar</JAR_FILE_NAME>
+          </buildArgs>
+          <!--<username>mjawadbutt</username>-->
+          <!--<password></password>-->
+          <useMavenSettingsForAuth>true</useMavenSettingsForAuth>
+        </configuration>
+        <executions>
+          <execution>
+            <id>default</id>
+            <goals>
+              <!-- Runs in 'package' phase-->
+              <goal>build</goal>
+              <!-- Runs in 'package' phase after build goal.-->
+              <goal>tag</goal>
+              <!-- Runs in 'deploy' phase-->
+              <goal>push</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <!--https://stackoverflow.com/questions/33908315/what-is-the-difference-between-executions-and-configurations-in-a-maven-plugin-->
+        <!--You can define <configuration>s on the <plugin> level or the <execution> level. The former is
+            globally valid for all executions (can define defaults), the latter is specific to the execution
+            (i.e. the values defined there override the ones defined in this global config section.-->
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+        <!-- In Maven some goals are bound to some phases by default. If for any reason, a goal needs to be
+             unbound then see the following <executions> snippet: -->
+        <!--https://stackoverflow.com/questions/7800647/in-a-maven-multi-module-project-how-can-i-disable-a-plugin-in-one-child                &lt;!&ndash;<executions>&ndash;&gt;-->
+        <!--<executions>-->
+        <!--  <execution>-->
+        <!--    &lt;!&ndash; Use the same id as the one maven super POM uses. &ndash;&gt;-->
+        <!--    <id>default-deploy</id>-->
+        <!--    &lt;!&ndash; Unbind the deploy:deploy goal from the deploy phase. The resources plugin-->
+        <!--         is very basic and does not even allow renaming of files when copying from src to target.-->
+        <!--         So we use the copy-rename-maven-plugin during the process-resources phase. &ndash;&gt;-->
+        <!--    &lt;!&ndash; Set phase to empty. &ndash;&gt;-->
+        <!--    <phase/>-->
+        <!--  </execution>-->
+        <!--</executions>-->
+      </plugin>
+
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <version>2.6.3</version>
+      </plugin>
+
+      <plugin>
+        <groupId>org.flywaydb</groupId>
+        <artifactId>flyway-maven-plugin</artifactId>
+        <version>8.4.3</version>
+      </plugin>
+
+    </plugins>
+
+  </build>
+
+  <repositories>
+    <!-- Additional repositories (apart from maven central and others that come bundles with Maven) where we can -->
+    <!-- download artifacts from: -->
+    <!--<repository>-->
+    <!--  &lt;!&ndash; This references the server.id in settings.xml to obtain credentials (if needed, i.e. in case its a &ndash;&gt;-->
+    <!--  &lt;!&ndash; non-public repo) &ndash;&gt;-->
+    <!--  <id>dockerio-almaan</id>-->
+    <!--  <name>dockerio.almaan.learn-github-actions</name>-->
+    <!--  <url>docker.io/almaan/learn-github-actions</url>-->
+    <!--  <releases>-->
+    <!--    <enabled>false</enabled>-->
+    <!--    <updatePolicy>never</updatePolicy>-->
+    <!--    <checksumPolicy>warn</checksumPolicy>-->
+    <!--  </releases>-->
+    <!--  <snapshots>-->
+    <!--    <enabled>false</enabled>-->
+    <!--    <updatePolicy>daily</updatePolicy>-->
+    <!--    <checksumPolicy>fail</checksumPolicy>-->
+    <!--  </snapshots>-->
+    <!--</repository>-->
+  </repositories>
+
+  <!--https://connected2know.com/programming/maven-settings/-->
+  <!-- This is not used presently because the dockerfile-maven-plugin we use does not read anything from this. -->
+  <!-- This is used by maven's 'deploy' plugin to publish maven style artifacts (jars) to maven registries. -->
+  <!-- However since we publish docker images rather than jars, we have used the dockerfile-maven-plugin to do so.-->
+  <!-- and this does not read anything from this element. -->
+  <distributionManagement>
+    <downloadUrl>TODO-Builds</downloadUrl>
+    <!-- Places where we upload artifacts to: -->
+    <repository>
+      <uniqueVersion>false</uniqueVersion>
+      <!-- This references the server.id in settings.xml to obtain credentials (if needed, i.e. in case its a -->
+      <!-- non-public repo) -->
+      <id>ghcr.io</id>
+      <name>ghcrio.jugno-mymentor.jugno.release-repo</name>
+      <url>https://ghcr.io/jugno-mymentor/jugno</url>
+      <layout>default</layout>
+    </repository>
+    <!--https://stackoverflow.com/questions/5901378/what-exactly-is-a-maven-snapshot-and-why-do-we-need-it?noredirect=1&lq=1-->
+    <snapshotRepository>
+      <uniqueVersion>true</uniqueVersion>
+      <id>ghcr.io</id>
+      <name>ghcrio.jugno-mymentor.jugno.snapshot-repo</name>
+      <!-- We are using the same release repo for pushing snapshot images -->
+      <url>https://ghcr.io/jugno-mymentor/jugno</url>
+      <layout>default</layout>
+    </snapshotRepository>
+  </distributionManagement>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-devtools</artifactId>
+      <scope>runtime</scope>
+      <optional>true</optional>
+    </dependency>
+    <!--<dependency>-->
+    <!--  <groupId>org.springframework.security</groupId>-->
+    <!--  <artifactId>spring-security-test</artifactId>-->
+    <!--  <scope>test</scope>-->
+    <!--</dependency>-->
+
+    <!--<dependency>-->
+    <!--  <groupId>org.springframework.boot</groupId>-->
+    <!--  <artifactId>spring-boot-starter-security</artifactId>-->
+    <!--</dependency>-->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
     <!--<dependency>-->
     <!--  <groupId>org.springframework.boot</groupId>-->
     <!--  <artifactId>spring-boot-starter-data-jdbc</artifactId>-->
@@ -34,74 +456,81 @@
     <!--  <groupId>org.springframework.boot</groupId>-->
     <!--  <artifactId>spring-boot-starter-data-jpa</artifactId>-->
     <!--</dependency>-->
-
-    <!--&lt;!&ndash;<dependency>&ndash;&gt;-->
-    <!--&lt;!&ndash;  <groupId>com.h2database</groupId>&ndash;&gt;-->
-    <!--&lt;!&ndash;  <artifactId>h2</artifactId>&ndash;&gt;-->
-    <!--&lt;!&ndash;  <scope>runtime</scope>&ndash;&gt;-->
-    <!--&lt;!&ndash;</dependency>&ndash;&gt;-->
-
-    <!--<dependency>-->
-    <!--  <groupId>org.postgresql</groupId>-->
-    <!--  <artifactId>postgresql</artifactId>-->
-    <!--  <scope>runtime</scope>-->
-    <!--</dependency>-->
-
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-security</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-web</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-validation</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-devtools</artifactId>
-      <scope>runtime</scope>
-      <optional>true</optional>
-    </dependency>
-
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-configuration-processor</artifactId>
       <optional>true</optional>
     </dependency>
-
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-test</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.springframework.security</groupId>
-      <artifactId>spring-security-test</artifactId>
-      <scope>test</scope>
-    </dependency>
-
   </dependencies>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-maven-plugin</artifactId>
-        <version>2.6.3</version>
-      </plugin>
-      <plugin>
-        <groupId>org.flywaydb</groupId>
-        <artifactId>flyway-maven-plugin</artifactId>
-        <version>8.4.3</version>
-      </plugin>
-    </plugins>
-  </build>
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+      <comments>A business-friendly OSS license</comments>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <id>mjawadbutt</id>
+      <name>Jawad</name>
+      <email>m_jawad_butt@yahoo.com</email>
+      <url>https://www.linkedin.com/in/muhammad-jawad-butt/</url>
+      <organization>WorkForce Software</organization>
+      <organizationUrl>http://www.workforcesoftware.com/</organizationUrl>
+      <roles>
+        <role>architect</role>
+        <role>developer</role>
+        <role>qa</role>
+      </roles>
+      <timezone>Pakistan/Karachi</timezone>
+    </developer>
+    <developer>
+      <id>sufyian</id>
+      <name>Sufyian</name>
+      <email></email>
+      <url></url>
+      <organization>Hello Fresh</organization>
+      <organizationUrl>http://www.hellofresh.com/</organizationUrl>
+      <roles>
+        <role>architect</role>
+        <role>developer</role>
+        <role>qa</role>
+      </roles>
+      <timezone>Germany/Berlin</timezone>
+    </developer>
+  </developers>
+
+  <contributors>
+    <contributor>
+      <name>Jawad</name>
+      <email>m_jawad_butt@yahoo.com</email>
+      <url>https://www.linkedin.com/in/muhammad-jawad-butt/</url>
+      <organization>WorkForce Software</organization>
+      <organizationUrl>http://www.workforcesoftware.com/</organizationUrl>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <timezone>Pakistan/Karachi</timezone>
+    </contributor>
+    <contributor>
+      <name>Sufyian</name>
+      <email></email>
+      <url></url>
+      <organization>Hello Fresh</organization>
+      <organizationUrl>http://www.hellofresh.com/</organizationUrl>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <timezone>Germany/Berlin</timezone>
+    </contributor>
+  </contributors>
+
+  <issueManagement>
+    <system>GitHub</system>
+    <url>https://github.com/mjawadbutt/learn-github-actions/issues</url>
+  </issueManagement>
 
 </project>

@@ -1,0 +1,101 @@
+name: workflow::before-feature-to-main-merge
+
+# See: https://nvie.com/posts/a-successful-git-branching-model/
+# See: https://towardsdatascience.com/setup-version-increment-and-automated-release-process-591d87ea1221
+
+on:
+  pull_request:
+    branches:
+      - master
+    types:
+      - closed
+
+  workflow_dispatch:
+    branches:
+      - master
+
+jobs:
+  before-feature-to-main-merge:
+    name: job::before-feature-to-main-merge
+    # See: https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
+    # See: https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#pull_request
+
+# TODO-CICD: The following if will prevent manual execution. We need to include an OR here to allow execution
+# TODO-CICD: if it is executing due to workflow_dispatch event.
+#    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout service
+        uses: actions/checkout@v3
+#        with:
+         # Relative path of dir under $GITHUB_WORKSPACE to place the repository.
+#          path:
+         # The name of the branch to checkout. Since this workflow is for master, it is the default and need not be specified.
+#           ref: master
+      - name: Setup JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'maven'
+
+      - name: Cache Maven packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2
+#          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          key: ${{ runner.os }}-m2-${{ hashFiles('pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      - name: Build
+        run: mvn --activate-profiles cicd --batch-mode package
+        # TODO-CICD: some random thoughts (didnt want to delete):
+        # Deploy should just publish docker image on remote repo. Release should be a separate proces.
+        # I think release should be via tag that is applied manually to main branch head commit. (if we had develop
+        # branch then we would do this on dev instead of main).
+        #
+        # After merge we would clean build, and run all tests again before merg. on failure we can create issue and assign
+        # to merge user. mark it as high priority. next level would be to create a bug branch (with bug dev as
+        # owner i.e. owner of github.head_ref will be set to bug dev) and then reset the head of dev branch (so
+        # it becomes stable again) and create issue and assign
+        #        to bug dev. auto branch creation makes sense here if we have to reset dev head to prev commit bc then if we
+        #        dont create branch then that commit
+        #        will be lost and would have to manually use ref db to create branch with that commit as its head.
+        #
+        #        since we dont have develop branch yet so Here we should first do things like maven clean build run all tests
+        #        on main then deploy to development
+        #         run: echo "trigger clean deploy and release? i think release should be via tag that is aplied manually to main branch head commit.
+        #        once tag is applied then an on release tag workflow should trigger release goal. which should not only bump versions but also deploy to prod.
+        #        before release,
+
+      - name: Run terraform tests
+        run: echo "Running terraform tests"
+
+      - name: Run helm tests
+        run: echo "Running helm tests"
+
+      - name: Deploy changes
+        run: echo "Deploying changes"
+
+      - name: Ensure roll-out
+        run: echo "Ensuring rollout"
+
+#TODO-CICD: Instead of using a PAT, should we pass GITHUB TOKEN as param to the mvn deploy? it is a better practice.
+      - name: Build
+        run: mvn --activate-profiles cicd --batch-mode deploy
+
+#      - name: Login to GitHub Container Registry
+#        uses: docker/login-action@v2
+#        with:
+#          registry: ghcr.io
+#          username: ${{ github.actor }}
+#          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: done
+        run: echo "Done!"
+
+          #uploading artifacts example (to share output between jobs is one use case)
+        # https://docs:github:com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven:
+
+# see example of creating issue via github api at:
+#https://docs.github.com/en/actions/security-guides/automatic-token-authentication

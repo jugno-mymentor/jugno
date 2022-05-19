@@ -1,4 +1,4 @@
-package com.jugno;
+package com.edtech.jugno;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -16,7 +16,7 @@ public class JugnoApplication {
   }
 
   public static void main(String[] args) {
-    SpringApplication.run(com.jugno.JugnoApplication.class, args);
+    SpringApplication.run(com.edtech.jugno.JugnoApplication.class, args);
   }
 
   @EventListener(ApplicationReadyEvent.class)
