@@ -297,27 +297,6 @@
         </configuration>
       </plugin>
 
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-antrun-plugin</artifactId>
-        <version>3.0.0</version>
-        <executions>
-          <execution>
-            <id>antrun-plugin</id>
-            <phase>deploy</phase>
-            <goals>
-              <goal>run</goal>
-            </goals>
-            <configuration>
-              <target>
-                <echo message="@@@@@@@@@@@@@@@ Hello, world"/>
-                <echo message="@@@@@@@@@@@@@@@ env.GITHUB = ${env.GITHUB_TOKEN}"/>
-              </target>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-             
       <!--use GITHUB TOKEN as password for gcr authentication in maven settings.xml -->
       <!--https://medium.com/@clarkbw/environment-variables-for-maven-settings-8280d8a809f9-->
       <!-- Container repo Authentication options. -->
@@ -358,6 +337,9 @@
         </executions>
       </plugin>
 
+      <!-- Prevent maven's default deploy goal from running during the deploy phase because otherwise it tries -->
+      <!-- to deploy the jar to GitHub packages docker repo and fails because it expects a maven style repo -->
+      <!-- Will find out later about why it tries to use the gchr.io and how to change it so that it uses a maven repo -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-deploy-plugin</artifactId>
@@ -396,6 +378,27 @@
         <version>8.4.3</version>
       </plugin>
 
+      <!-- Configured in case we need to add echo statements for debugging the pom.xml -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>3.0.0</version>
+        <executions>
+          <execution>
+            <id>antrun-plugin</id>
+            <phase>deploy</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <!--<echo message="Hello, world"/>-->
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
     </plugins>
 
   </build>
@@ -428,7 +431,7 @@
   <!-- However since we publish docker images rather than jars, we have used the dockerfile-maven-plugin to do so.-->
   <!-- and this does not read anything from this element. -->
   <distributionManagement>
-    <downloadUrl>TODO-Builds</downloadUrl>
+    <downloadUrl>TODO-Builds: What should we set here?</downloadUrl>
     <!-- Places where we upload artifacts to: -->
     <repository>
       <uniqueVersion>false</uniqueVersion>

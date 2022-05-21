@@ -27,11 +27,7 @@ jobs:
     steps:
       - name: Checkout service
         uses: actions/checkout@v3
-          #        with:
-          # Relative path of dir under $GITHUB_WORKSPACE to place the repository.
-        #          path:
-        # The name of the branch to checkout. Since this workflow is for master, it is the default and need not be specified.
-      #           ref: master
+
       - name: Setup JDK
         uses: actions/setup-java@v3
         with:
@@ -59,6 +55,8 @@ jobs:
       - name: Ensure roll-out
         run: echo "Ensuring rollout"
 
+      # We can either login using a GitHub Action as below OR we can pass GITHUB_TOKEN as env var to the mvn process
+      # (See Build step below on how it is passed as env var to mvn process).
 #      - name: Login to GitHub Container Registry
 #        uses: docker/login-action@v1
 #        with:
@@ -68,8 +66,15 @@ jobs:
 
       - name: Build
         run: mvn --activate-profiles cicd --batch-mode clean deploy
+        # The 'deploy' goal will need to authentication to GitHub packages to be able to push the docker image.
+        # We will make use of the GitHub provided secret 'secrets.GITHUB_TOKEN' to do that. Note that in this context
+        # (i.e. a repository workflow) the token that secrets.GITHUB_TOKEN refers to is a repository level token
+        # and NOT an organization level one. So in order for it to work, we first have to publish with a PAT and
+        # then later we need to link the uploaded package (aka image) to the repository. And set permission of the
+        # package so that the repository can read/write. Only then the GITHUB_TOKEN can be used to publish. Otherwise,
+        # the repo level GITHUB_TOKEN will not have the 'write' permission (which is needed to publish/upload the image)
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_PACKAGES_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         # TODO-CICD: some random thoughts (didnt want to delete):
         # Deploy should just publish docker image on remote repo. Release should be a separate proces.
         # I think release should be via tag that is applied manually to main branch head commit. (if we had develop
