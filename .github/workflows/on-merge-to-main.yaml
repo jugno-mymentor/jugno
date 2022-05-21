@@ -1,4 +1,4 @@
-name: before-feature-to-main-merge
+name: on-merge-to-main
 
 # See: https://nvie.com/posts/a-successful-git-branching-model/
 # See: https://towardsdatascience.com/setup-version-increment-and-automated-release-process-591d87ea1221
@@ -15,8 +15,8 @@ on:
       - main
 
 jobs:
-  build-test-publish:
-    name: build-test-publish
+  on-merge-to-main:
+    name: on-merge-to-main
     # See: https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
     # See: https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#pull_request
 
@@ -48,7 +48,7 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
 
       - name: Build
-        run: mvn --activate-profiles cicd --batch-mode package
+        run: mvn --activate-profiles cicd --batch-mode clean package
         # TODO-CICD: some random thoughts (didnt want to delete):
         # Deploy should just publish docker image on remote repo. Release should be a separate proces.
         # I think release should be via tag that is applied manually to main branch head commit. (if we had develop
@@ -83,6 +83,8 @@ jobs:
       #TODO-CICD: Instead of using a PAT, should we pass GITHUB TOKEN as param to the mvn deploy? it is a better practice.
       - name: Build
         run: mvn --activate-profiles cicd --batch-mode deploy
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       #      - name: Login to GitHub Container Registry
       #        uses: docker/login-action@v2
