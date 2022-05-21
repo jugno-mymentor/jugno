@@ -1,4 +1,4 @@
-name: workflow::before-feature-to-main-merge
+name: before-feature-to-main-merge
 
 # See: https://nvie.com/posts/a-successful-git-branching-model/
 # See: https://towardsdatascience.com/setup-version-increment-and-automated-release-process-591d87ea1221
@@ -6,32 +6,32 @@ name: workflow::before-feature-to-main-merge
 on:
   pull_request:
     branches:
-      - master
+      - main
     types:
       - closed
 
   workflow_dispatch:
     branches:
-      - master
+      - main
 
 jobs:
-  before-feature-to-main-merge:
-    name: job::before-feature-to-main-merge
+  build-test-publish:
+    name: build-test-publish
     # See: https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
     # See: https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#pull_request
 
-# TODO-CICD: The following if will prevent manual execution. We need to include an OR here to allow execution
-# TODO-CICD: if it is executing due to workflow_dispatch event.
-#    if: github.event.pull_request.merged == true
+    # TODO-CICD: The following if will prevent manual execution. We need to include an OR here to allow execution
+    # TODO-CICD: if it is executing due to workflow_dispatch event.
+    #    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - name: Checkout service
         uses: actions/checkout@v3
-#        with:
-         # Relative path of dir under $GITHUB_WORKSPACE to place the repository.
-#          path:
-         # The name of the branch to checkout. Since this workflow is for master, it is the default and need not be specified.
-#           ref: master
+          #        with:
+          # Relative path of dir under $GITHUB_WORKSPACE to place the repository.
+          #          path:
+        # The name of the branch to checkout. Since this workflow is for master, it is the default and need not be specified.
+      #           ref: master
       - name: Setup JDK
         uses: actions/setup-java@v3
         with:
@@ -43,7 +43,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.m2
-#          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          #          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           key: ${{ runner.os }}-m2-${{ hashFiles('pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
@@ -80,21 +80,21 @@ jobs:
       - name: Ensure roll-out
         run: echo "Ensuring rollout"
 
-#TODO-CICD: Instead of using a PAT, should we pass GITHUB TOKEN as param to the mvn deploy? it is a better practice.
+      #TODO-CICD: Instead of using a PAT, should we pass GITHUB TOKEN as param to the mvn deploy? it is a better practice.
       - name: Build
         run: mvn --activate-profiles cicd --batch-mode deploy
 
-#      - name: Login to GitHub Container Registry
-#        uses: docker/login-action@v2
-#        with:
-#          registry: ghcr.io
-#          username: ${{ github.actor }}
-#          password: ${{ secrets.GITHUB_TOKEN }}
+      #      - name: Login to GitHub Container Registry
+      #        uses: docker/login-action@v2
+      #        with:
+      #          registry: ghcr.io
+      #          username: ${{ github.actor }}
+      #          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: done
         run: echo "Done!"
 
-          #uploading artifacts example (to share output between jobs is one use case)
+        #uploading artifacts example (to share output between jobs is one use case)
         # https://docs:github:com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven:
 
 # see example of creating issue via github api at:
