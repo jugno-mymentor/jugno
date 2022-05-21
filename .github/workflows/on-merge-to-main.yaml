@@ -59,17 +59,17 @@ jobs:
       - name: Ensure roll-out
         run: echo "Ensuring rollout"
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v1
-        with:
-          registry: ghcr.io
-          username: ${{github.actor}}
-          password: ${{secrets.GITHUB_TOKEN}}
+#      - name: Login to GitHub Container Registry
+#        uses: docker/login-action@v1
+#        with:
+#          registry: ghcr.io
+#          username: ${{github.actor}}
+#          password: ${{secrets.GITHUB_TOKEN}}
 
       - name: Build
         run: mvn --activate-profiles cicd --batch-mode clean deploy
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         # TODO-CICD: some random thoughts (didnt want to delete):
         # Deploy should just publish docker image on remote repo. Release should be a separate proces.
         # I think release should be via tag that is applied manually to main branch head commit. (if we had develop
