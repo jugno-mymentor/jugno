@@ -47,27 +47,6 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
-      - name: Build
-        run: mvn --activate-profiles cicd --batch-mode clean package
-        # TODO-CICD: some random thoughts (didnt want to delete):
-        # Deploy should just publish docker image on remote repo. Release should be a separate proces.
-        # I think release should be via tag that is applied manually to main branch head commit. (if we had develop
-        # branch then we would do this on dev instead of main).
-        #
-        # After merge we would clean build, and run all tests again before merg. on failure we can create issue and assign
-        # to merge user. mark it as high priority. next level would be to create a bug branch (with bug dev as
-        # owner i.e. owner of github.head_ref will be set to bug dev) and then reset the head of dev branch (so
-        # it becomes stable again) and create issue and assign
-        #        to bug dev. auto branch creation makes sense here if we have to reset dev head to prev commit bc then if we
-        #        dont create branch then that commit
-        #        will be lost and would have to manually use ref db to create branch with that commit as its head.
-        #
-        #        since we dont have develop branch yet so Here we should first do things like maven clean build run all tests
-        #        on main then deploy to development
-        #         run: echo "trigger clean deploy and release? i think release should be via tag that is aplied manually to main branch head commit.
-        #        once tag is applied then an on release tag workflow should trigger release goal. which should not only bump versions but also deploy to prod.
-        #        before release,
-
       - name: Run terraform tests
         run: echo "Running terraform tests"
 
@@ -88,9 +67,27 @@ jobs:
           password: ${{secrets.GITHUB_TOKEN}}
 
       - name: Build
-        run: mvn --activate-profiles cicd --batch-mode deploy
+        run: mvn --activate-profiles cicd --batch-mode clean deploy
 #        env:
 #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # TODO-CICD: some random thoughts (didnt want to delete):
+        # Deploy should just publish docker image on remote repo. Release should be a separate proces.
+        # I think release should be via tag that is applied manually to main branch head commit. (if we had develop
+        # branch then we would do this on dev instead of main).
+        #
+        # After merge we would clean build, and run all tests again before merg. on failure we can create issue and assign
+        # to merge user. mark it as high priority. next level would be to create a bug branch (with bug dev as
+        # owner i.e. owner of github.head_ref will be set to bug dev) and then reset the head of dev branch (so
+        # it becomes stable again) and create issue and assign
+        #        to bug dev. auto branch creation makes sense here if we have to reset dev head to prev commit bc then if we
+        #        dont create branch then that commit
+        #        will be lost and would have to manually use ref db to create branch with that commit as its head.
+        #
+        #        since we dont have develop branch yet so Here we should first do things like maven clean build run all tests
+        #        on main then deploy to development
+        #         run: echo "trigger clean deploy and release? i think release should be via tag that is aplied manually to main branch head commit.
+        #        once tag is applied then an on release tag workflow should trigger release goal. which should not only bump versions but also deploy to prod.
+        #        before release,
 
       - name: done
         run: echo "Done!"
