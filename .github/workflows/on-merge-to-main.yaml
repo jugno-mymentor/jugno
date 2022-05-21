@@ -80,18 +80,17 @@ jobs:
       - name: Ensure roll-out
         run: echo "Ensuring rollout"
 
-      #TODO-CICD: Instead of using a PAT, should we pass GITHUB TOKEN as param to the mvn deploy? it is a better practice.
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{github.actor}}
+          password: ${{secrets.GITHUB_TOKEN}}
+
       - name: Build
         run: mvn --activate-profiles cicd --batch-mode deploy
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      #      - name: Login to GitHub Container Registry
-      #        uses: docker/login-action@v2
-      #        with:
-      #          registry: ghcr.io
-      #          username: ${{ github.actor }}
-      #          password: ${{ secrets.GITHUB_TOKEN }}
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: done
         run: echo "Done!"
