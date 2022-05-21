@@ -1,3 +1,5 @@
+[![on-merge-to-main](https://github.com/jugno-mymentor/jugno/actions/workflows/on-merge-to-main.yaml/badge.svg)](https://github.com/jugno-mymentor/jugno/actions/workflows/on-merge-to-main.yaml)
+
 # jugno
 
 
