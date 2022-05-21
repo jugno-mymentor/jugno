@@ -1,7 +1,6 @@
 # Blacklist the highest level directory with /*
 /*
 
-
 # Whitelist the files that should be part of the respository.
 !.git/
 !.git/**
