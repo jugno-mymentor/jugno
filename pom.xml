@@ -108,6 +108,9 @@
           <family>unix</family>
         </os>
       </activation>
+      <properties>
+        <my.useMavenSettingsForAuth>false</my.useMavenSettingsForAuth>
+      </properties>
       <build>
       </build>
       <dependencies>
@@ -133,6 +136,9 @@
           <family>Windows</family>
         </os>
       </activation>
+      <properties>
+        <my.useMavenSettingsForAuth>true</my.useMavenSettingsForAuth>
+      </properties>
       <build>
         <!-- TODO-Builds -->
       </build>
@@ -158,7 +164,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <configuration>
-
           <!-- There are more config elements but I am keeping only the non-typical ones here for reference. -->
 
           <!--MavenArchiveConfiguration	-	The archive configuration to use. See Maven Archiver Reference.-->
@@ -308,9 +313,14 @@
             <JAR_FILE_DIR>target</JAR_FILE_DIR>
             <JAR_FILE_NAME>${project.build.finalName}.jar</JAR_FILE_NAME>
           </buildArgs>
-          <!--<username>mjawadbutt</username>-->
-          <!--<password></password>-->
-          <useMavenSettingsForAuth>true</useMavenSettingsForAuth>
+          <useMavenSettingsForAuth>${my.useMavenSettingsForAuth}</useMavenSettingsForAuth>
+          <!-- If my.useMavenSettingsForAuth is false then the below username/pwd will be used. Otherwise the  -->
+          <!-- password in settings.xml will be used. -->
+          <!-- We set this to false in case of CICD because when running mvn deploy on GitHub we will authenticate  -->
+          <!-- to GitHub packages using GITHUB_TOKEN, and when running mvn deploy locally, we will use maven's -->
+          <!-- encrypted password mechanism where password is define in settings.xml -->
+          <username>mjawadbutt</username>
+          <password>$${secrets.GITHUB_TOKEN}</password>
         </configuration>
         <executions>
           <execution>
