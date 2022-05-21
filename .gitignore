@@ -1,18 +1,18 @@
 # Blacklist the highest level directory with /*
 /*
 
-/src/main/main.iml
-/src/test/main.iml
-
 # Whitelist the files that should be part of the respository.
 !.git/
 !.git/**
-!.gitattributes
 !.github/
 !.github/**
-!.gitignore
 !src/
 !src/**
+src/main/main.iml
+src/test/test.iml
+!.gitattributes
+!.gitignore
+!Dockerfile
 !LICENSE
 !pom.xml
 !README.md
