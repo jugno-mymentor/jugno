@@ -311,7 +311,7 @@
             <configuration>
               <target>
                 <echo message="@@@@@@@@@@@@@@@ Hello, world"/>
-                <echo message="@@@@@@@@@@@@@@@ env.GITHUB = ${env.GITHUB}"/>
+                <echo message="@@@@@@@@@@@@@@@ env.GITHUB = ${env.GITHUB_TOKEN}"/>
               </target>
             </configuration>
           </execution>
