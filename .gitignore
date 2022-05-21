@@ -1,6 +1,9 @@
 # Blacklist the highest level directory with /*
 /*
 
+/src/main/main.iml
+/src/test/main.iml
+
 # Whitelist the files that should be part of the respository.
 !.git/
 !.git/**
