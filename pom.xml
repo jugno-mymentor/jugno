@@ -340,8 +340,8 @@
           <!-- We set this to false in case of CICD because when running mvn deploy on GitHub we will authenticate  -->
           <!-- to GitHub packages using GITHUB_TOKEN, and when running mvn deploy locally, we will use maven's -->
           <!-- encrypted password mechanism where password is define in settings.xml -->
-          <username>mjawadbutt</username>
-          <password>${env.GITHUB_TOKEN}</password>
+#          <username>mjawadbutt</username>
+#          <password>${env.GITHUB_TOKEN}</password>
         </configuration>
         <executions>
           <execution>
