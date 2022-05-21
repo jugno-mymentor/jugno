@@ -265,32 +265,32 @@
           <!--Default value is: ${project.build.outputDirectory}.-->
           <!--<classesDirectory>${project.build.outputDirectory}</classesDirectory>-->
 
-          <!--File	-	Directory containing the generated JAR.-->
+          <!--File - Directory containing the generated JAR.-->
           <!--Default value is: ${project.build.directory}.-->
           <!--Optional Parameters-->
-          <!--Name	Type	Since	Description-->
+          <!--Name, Type, Since, Description-->
           <!--<outputDirectory>${project.build.directory}</outputDirectory>-->
 
-          <!--String	-	Classifier to add to the artifact generated. If given, the artifact will be attached as a supplemental artifact. If not given this will create the main artifact which is the default behavior. If you try to do that a second time without using a classifier the build will fail.-->
+          <!--String - Classifier to add to the artifact generated. If given, the artifact will be attached as a supplemental artifact. If not given this will create the main artifact which is the default behavior. If you try to do that a second time without using a classifier the build will fail.-->
           <!--<classifier></classifier>-->
 
-          <!--String[]	-	List of files to exclude. Specified as fileset patterns which are relative to the input directory whose contents is being packaged into the JAR.-->
+          <!--String[] - List of files to exclude. Specified as fileset patterns which are relative to the input directory whose contents is being packaged into the JAR.-->
           <!--<excludes name=""/>-->
 
-          <!--boolean	-	Require the jar plugin to build a new JAR even if none of the contents appear to have changed. By default, this plugin looks to see if the output jar exists and inputs have not changed. If these conditions are true, the plugin skips creation of the jar. This does not work when other plugins, like the maven-shade-plugin, are configured to post-process the jar. This plugin can not detect the post-processing, and so leaves the post-processed jar in place. This can lead to failures when those plugins do not expect to find their own output as an input. Set this parameter to true to avoid these problems by forcing this plugin to recreate the jar every time.-->
+          <!--boolean - Require the jar plugin to build a new JAR even if none of the contents appear to have changed. By default, this plugin looks to see if the output jar exists and inputs have not changed. If these conditions are true, the plugin skips creation of the jar. This does not work when other plugins, like the maven-shade-plugin, are configured to post-process the jar. This plugin can not detect the post-processing, and so leaves the post-processed jar in place. This can lead to failures when those plugins do not expect to find their own output as an input. Set this parameter to true to avoid these problems by forcing this plugin to recreate the jar every time.-->
           <!--Starting with 3.0.0 the property has been renamed from jar.forceCreation to maven.jar.forceCreation.-->
           <!--Default value is: false.-->
           <!--User property is: maven.jar.forceCreation.-->
           <!--<forceCreation>false</forceCreation>-->
 
-          <!--String[]	-	List of files to include. Specified as fileset patterns which are relative to the input directory whose contents is being packaged into the JAR.-->
+          <!--String[] - List of files to include. Specified as fileset patterns which are relative to the input directory whose contents is being packaged into the JAR.-->
           <!--<includes name=""/>-->
 
-          <!--String	3.2.0	Timestamp for reproducible output archive entries, either formatted as ISO 8601 yyyy-MM-dd'T'HH:mm:ssXXX or as an int representing seconds since the epoch (like SOURCE_DATE_EPOCH).-->
+          <!--String 3.2.0 Timestamp for reproducible output archive entries, either formatted as ISO 8601 yyyy-MM-dd'T'HH:mm:ssXXX or as an int representing seconds since the epoch (like SOURCE_DATE_EPOCH).-->
           <!--Default value is: ${project.build.outputTimestamp}.-->
           <!--<outputTimestamp>${maven.build.timestamp}</outputTimestamp>-->
 
-          <!--boolean	-	Skip creating empty archives.-->
+          <!--boolean - Skip creating empty archives.-->
           <!--Default value is: false.-->
           <!--<skipIfEmpty>false</skipIfEmpty>-->
 
@@ -340,8 +340,8 @@
           <!-- We set this to false in case of CICD because when running mvn deploy on GitHub we will authenticate  -->
           <!-- to GitHub packages using GITHUB_TOKEN, and when running mvn deploy locally, we will use maven's -->
           <!-- encrypted password mechanism where password is define in settings.xml -->
-#          <username>mjawadbutt</username>
-#          <password>${env.GITHUB_TOKEN}</password>
+          <username>mjawadbutt</username>
+          <password>${env.GITHUB_TOKEN}</password>
         </configuration>
         <executions>
           <execution>
