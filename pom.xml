@@ -320,7 +320,7 @@
           <!-- to GitHub packages using GITHUB_TOKEN, and when running mvn deploy locally, we will use maven's -->
           <!-- encrypted password mechanism where password is define in settings.xml -->
           <username>mjawadbutt</username>
-          <password>&amp;{secrets.GITHUB_TOKEN}</password>
+          <password>$${secrets.GITHUB_TOKEN}</password>
         </configuration>
         <executions>
           <execution>
