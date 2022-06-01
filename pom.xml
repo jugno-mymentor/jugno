@@ -64,30 +64,18 @@
   </properties>
 
   <profiles>
+
     <profile>
       <id>prod</id>
       <activation>
-        <property>
-          <!-- In case multiple profiles are active (multiple profiles meet the activation criteria) then the ones
-               which are defined later take precedence over the ones defined earlier
-               (independent of their profile id and activation order).-->
-          <name>build_env</name>
-          <value>prod</value>
-        </property>
         <os>
           <family>unix</family>
         </os>
       </activation>
       <build>
       </build>
-      <dependencies>
-        <dependency>
-          <groupId>org.postgresql</groupId>
-          <artifactId>postgresql</artifactId>
-          <scope>runtime</scope>
-        </dependency>
-      </dependencies>
     </profile>
+
     <profile>
       <!--  This profile will be used by Github Action and run as a result of merging of PRs: -->
       <!--  1. Clean build test package (create docker image) and deploy (publish image to github packages).-->
@@ -98,12 +86,6 @@
       <!--  5. Also, we will use Maven-release plugin when we finalize the release process. -->
       <id>cicd</id>
       <activation>
-        <property>
-          <!-- In case multiple profiles are active (multiple profiles meet the activation criteria) then the ones -->
-          <!-- which are defined later take precedence over the ones defined earlier. -->
-          <name>build_env</name>
-          <value>cicd</value>
-        </property>
         <os>
           <family>unix</family>
         </os>
@@ -111,16 +93,48 @@
       <properties>
         <my.useMavenSettingsForAuth>false</my.useMavenSettingsForAuth>
       </properties>
+
       <build>
+        <plugins>
+          <!-- Instead of this we could use spring-boot-maven plugin which allows to build images using build packs -->
+          <!-- From all the ways we can create images, like dockerfile, jib, buildpacks, the dockerfile method -->
+          <!-- seems to be the most flexible but most difficult option. Also buildx option when using dockerfile -->
+          <!-- build is the most powerful bc it allows us to make emulated multiarchitecture images or physical -->
+          <!-- multiarchitecture images in parallel (it allows building on remote docker hosts which means the cli -->
+          <!-- can be only windows and it can trigger builds on another machine running linux and mac. -->
+          <!-- https://docs.spring.io/spring-boot/docs/2.3.0.M1/maven-plugin/html/ -->
+          <plugin>
+            <groupId>com.spotify</groupId>
+            <artifactId>dockerfile-maven-plugin</artifactId>
+            <configuration>
+              <!-- If my.useMavenSettingsForAuth is false then the below username/pwd will be used. Otherwise the  -->
+              <!-- password in settings.xml will be used. -->
+              <!-- We set this to false in case of CICD because when running mvn deploy on GitHub we will authenticate  -->
+              <!-- to GitHub packages using GITHUB_TOKEN, and when running mvn deploy locally, we will use maven's -->
+              <!-- encrypted password mechanism where password is define in settings.xml -->
+              <useMavenSettingsForAuth>false</useMavenSettingsForAuth>
+              <username>mjawadbutt</username>
+              <password>${env.GITHUB_PACKAGES_AUTH_TOKEN}</password>
+            </configuration>
+            <executions>
+              <execution>
+                <id>default</id>
+                <goals>
+                  <!-- Runs in 'package' phase-->
+                  <goal>build</goal>
+                  <!-- Runs in 'package' phase after build goal.-->
+                  <goal>tag</goal>
+                  <!-- Runs in 'deploy' phase-->
+                  <goal>push</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
       </build>
-      <dependencies>
-        <dependency>
-          <groupId>com.h2database</groupId>
-          <artifactId>h2</artifactId>
-          <scope>runtime</scope>
-        </dependency>
-      </dependencies>
+
     </profile>
+
     <!--https://maven.apache.org/guides/mini/guide-building-for-different-environments.html-->
     <profile>
       <!--  This profile will be used by devs. -->
@@ -136,20 +150,60 @@
           <family>Windows</family>
         </os>
       </activation>
+
       <properties>
         <my.useMavenSettingsForAuth>true</my.useMavenSettingsForAuth>
       </properties>
+
       <build>
-        <!-- TODO-Builds -->
+        <plugins>
+          <plugin>
+            <groupId>com.spotify</groupId>
+            <artifactId>dockerfile-maven-plugin</artifactId>
+            <configuration>
+              <!-- If my.useMavenSettingsForAuth is false then the below username/pwd will be used. Otherwise the  -->
+              <!-- password in settings.xml will be used. -->
+              <!-- We set this to false in case of CICD because when running mvn deploy on GitHub we will authenticate  -->
+              <!-- to GitHub packages using GITHUB_TOKEN, and when running mvn deploy locally, we set it to true -->
+              <!-- so that we can use maven's encrypted password mechanism where password is define in settings.xml -->
+              <useMavenSettingsForAuth>true</useMavenSettingsForAuth>
+            </configuration>
+          </plugin>
+
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>3.0.0</version>
+            <executions>
+              <execution>
+                <id>antrun-plugin</id>
+                <!--<phase>deploy</phase>-->
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <echo message="Hello, world"/>
+                  </target>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+        </plugins>
       </build>
+
       <dependencies>
         <dependency>
-          <groupId>com.h2database</groupId>
-          <artifactId>h2</artifactId>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-devtools</artifactId>
           <scope>runtime</scope>
+          <optional>true</optional>
         </dependency>
       </dependencies>
+
     </profile>
+
   </profiles>
 
   <build>
@@ -159,6 +213,28 @@
     <finalName>${project.artifactId}-${project.version}</finalName>
 
     <plugins>
+
+      <plugin>
+        <groupId>org.flywaydb</groupId>
+        <artifactId>flyway-maven-plugin</artifactId>
+        <version>8.4.3</version>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-clean-plugin</artifactId>
+        <configuration>
+          <filesets>
+            <fileset>
+              <directory>.</directory>
+              <includes>
+                <!-- Recursively delete the logs directory -->
+                <include>logs/**</include>
+              </includes>
+              <followSymlinks>false</followSymlinks>
+            </fileset>
+          </filesets>
+        </configuration>
+      </plugin>
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -301,7 +377,14 @@
       <!--https://medium.com/@clarkbw/environment-variables-for-maven-settings-8280d8a809f9-->
       <!-- Container repo Authentication options. -->
       <!--https://github.com/spotify/dockerfile-maven/blob/master/docs/authentication.md-->
+
       <!-- To run this image do: docker run -p <any port of choice>:8080 ${project.build.finalName}.jar -->
+
+      <!-- A plugin goal can be executed directly via its fully qualified name as below: -->
+      <!-- mvn com.spotify.dockerfile-maven-plugin:build -->
+      <!-- OR -->
+      <!-- It can be executed using a prefix that is deduced from the artifactId by removing the '-maven-plugin' suffix:-->
+      <!-- mvn dockerfile:build -->
       <plugin>
         <groupId>com.spotify</groupId>
         <artifactId>dockerfile-maven-plugin</artifactId>
@@ -313,28 +396,7 @@
             <JAR_FILE_DIR>target</JAR_FILE_DIR>
             <JAR_FILE_NAME>${project.build.finalName}.jar</JAR_FILE_NAME>
           </buildArgs>
-          <useMavenSettingsForAuth>${my.useMavenSettingsForAuth}</useMavenSettingsForAuth>
-          <!-- If my.useMavenSettingsForAuth is false then the below username/pwd will be used. Otherwise the  -->
-          <!-- password in settings.xml will be used. -->
-          <!-- We set this to false in case of CICD because when running mvn deploy on GitHub we will authenticate  -->
-          <!-- to GitHub packages using GITHUB_TOKEN, and when running mvn deploy locally, we will use maven's -->
-          <!-- encrypted password mechanism where password is define in settings.xml -->
-          <username>mjawadbutt</username>
-          <password>${env.GITHUB_PACKAGES_AUTH_TOKEN}</password>
         </configuration>
-        <executions>
-          <execution>
-            <id>default</id>
-            <goals>
-              <!-- Runs in 'package' phase-->
-              <goal>build</goal>
-              <!-- Runs in 'package' phase after build goal.-->
-              <goal>tag</goal>
-              <!-- Runs in 'deploy' phase-->
-              <goal>push</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
 
       <!-- Prevent maven's default deploy goal from running during the deploy phase because otherwise it tries -->
@@ -370,33 +432,6 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
         <version>2.6.3</version>
-      </plugin>
-
-      <plugin>
-        <groupId>org.flywaydb</groupId>
-        <artifactId>flyway-maven-plugin</artifactId>
-        <version>8.4.3</version>
-      </plugin>
-
-      <!-- Configured in case we need to add echo statements for debugging the pom.xml -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-antrun-plugin</artifactId>
-        <version>3.0.0</version>
-        <executions>
-          <execution>
-            <id>antrun-plugin</id>
-            <phase>deploy</phase>
-            <goals>
-              <goal>run</goal>
-            </goals>
-            <configuration>
-              <target>
-                <!--<echo message="Hello, world"/>-->
-              </target>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
 
     </plugins>
@@ -456,21 +491,21 @@
   <dependencies>
 
     <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-devtools</artifactId>
-      <scope>runtime</scope>
-      <optional>true</optional>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-test</artifactId>
+      <scope>test</scope>
     </dependency>
-
-    <!--<dependency>-->
-    <!--  <groupId>org.springframework.security</groupId>-->
-    <!--  <artifactId>spring-security-test</artifactId>-->
-    <!--  <scope>test</scope>-->
-    <!--</dependency>-->
 
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-security</artifactId>
+      <!--https://stackoverflow.com/questions/4716310/is-there-a-way-to-exclude-a-maven-dependency-globally-->
+      <exclusions>
+        <exclusion>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-starter-logging</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
@@ -488,21 +523,71 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-validation</artifactId>
     </dependency>
+
     <!--<dependency>-->
     <!--  <groupId>org.springframework.boot</groupId>-->
     <!--  <artifactId>spring-boot-starter-data-jdbc</artifactId>-->
     <!--</dependency>-->
 
-    <!--<dependency>-->
-    <!--  <groupId>org.springframework.boot</groupId>-->
-    <!--  <artifactId>spring-boot-starter-data-jpa</artifactId>-->
-    <!--</dependency>-->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>runtime</scope>
+    </dependency>
 
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-configuration-processor</artifactId>
       <optional>true</optional>
     </dependency>
+
+    <!-- Added so that we can use SL4J API with log4j2 as its impl rather than logback. To enable this we also -->
+    <!-- needed to exclude logback dependency from all starters. See exclusions defined above. -->
+    <!-- https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-slf4j-impl -->
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j-impl</artifactId>
+      <version>2.17.1</version>
+      <scope>runtime</scope>
+    </dependency>
+
+    <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.7.36</version>
+    </dependency>
+
+    <!-- Added so that we can use spring-boot property lookups in the log4j2 xml config file. -->
+    <!-- See https://logging.apache.org/log4j/2.x/manual/lookups.html for examples -->
+    <!-- https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-spring-cloud-config-client -->
+    <!--<dependency>-->
+    <!--  <groupId>org.apache.logging.log4j</groupId>-->
+    <!--  <artifactId>log4j-spring-cloud-config-client</artifactId>-->
+    <!--  <version>2.17.1</version>-->
+    <!--</dependency>-->
+
+    <!-- Added so that we can use spring-boot property lookups in the log4j2 xml config file. -->
+    <!-- See https://logging.apache.org/log4j/2.x/manual/lookups.html for examples -->
+    <!-- https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-spring-boot -->
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-spring-boot</artifactId>
+      <version>2.17.1</version>
+    </dependency>
+
+    <!-- https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-core -->
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+      <version>2.17.1</version>
+    </dependency>
+
   </dependencies>
 
   <licenses>
