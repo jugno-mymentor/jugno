@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--# Logback is the default reference implementation of Apache commons logging. To switch to other logging -->
+<!--# implementations (like log4j2) see: -->
+<!--# https://www.baeldung.com/spring-boot-logging-->
+<!--# https://krishankantsinghal.medium.com/logback-slf4j-log4j2-understanding-them-and-learn-how-to-use-d33deedd0c46-->
+<!--# https://sematext.com/blog/log4j2-tutorial/-->
+
+<!-- log4j2 tries to load the configuration file automatically as follows: -->
+<!-- https://stackoverflow.com/questions/52300045/initialize-slf4j-with-log4j2-xml-->
+<!-- If it is desired to initialize the config programmatically by specifying an xml file within the code then it can also be done.  -->
+
+<!-- monitorInterval (in seconds) defines when to check for changes in this config and reload it at runtime. -->
+<!-- Default is 5 seconds. -->
+<!-- status is the logging level for logging log4j2's internal logs (if there is an issue with log4j2) -->
+<!-- Valid values are same as levels i.e. TRACE, DEBUG, INFO, WARN, ERROR, ALL or OFF. -->
+<Configuration monitorInterval="30" status="off">
+  <!-- ${<context>.propertyName} evaluation also possible. Eg ${env.ALLUSERSPROFILE}. See: -->
+  <!-- https://logging.apache.org/log4j/2.x/manual/configuration.html#PropertySubstitution -->
+  <!-- https://logging.apache.org/log4j/2.x/manual/lookups.html -->
+  <Properties>
+    <!-- Can defined props like this and use below like ${propname} -->
+    <!-- Spring environment props and props from other areas (like system env, loggerthreadcontext, etc) can also be used: -->
+    <!-- $${spring:spring.application.name}-->
+    <!--<Property name="logFileDir">./logs</Property>-->
+    <!--<Property name="logFileName">log.txt</Property>-->
+    <!--<Property name="rollingOverFilePattern">log.txt</Property>-->
+    <!--<Property name="maxSizeOfLogFile">1MB</Property>-->
+  </Properties>
+  <Appenders>
+    <SpringProfile name="dev | staging">
+      <Console name="Console" target="SYSTEM_OUT" advertise="true">
+        <!-- Also note that a pattern selector can be used to conditionally change the logging pattern. -->
+        <!-- Use case: in dev environment while debugging i want class, method, line no but in prod i dont because -->
+        <!-- it slows performance. -->
+        <PatternLayout charset="ISO_8859_1">
+          <!-- In the pattern encode{pattern}{[HTML|XML|JSON|CRLF]} might be needed to escape special chars if -->
+          <!-- output is not plain string but in json or xml, etc. formats which have special meanings for certain chars -->
+          <!-- Between % and conversion characters, we can optionally specify format modifier. This is used to  -->
+          <!-- specify minimum and maximum lengths of output. In case of minimum length constraint, we can also -->
+          <!-- change padding character, justification (left or right). In case of maximum length we can specify  -->
+          <!-- from where to truncate (left or right)-->
+          <!-- Syntax: %<left or right justify>[0]<minimum length>.8level -->
+          <!-- Example: %-5.8level -->
+          <!-- 5 means minimum length must be 5. - means left justify. -->
+          <!-- After the period starts the maxlen spec. 8 means max length is 8. If more than 8 then it will be truncated from the LEFT -->
+          <!-- Example: % 05.-8level -->
+          <!-- space before 0 means right justify. The 0 means 0 will be used as padding char instead of space -->
+          <!-- The minus before the 8 means truncate from the RIGHT of the output and not the left. -->
+          <pattern>%date{ISO8601} %highlight{%-5level}[PID:%pid{n/a}] [%style{THREAD: %threadName}{bright,blue}] %style{%class}{bright,yellow}: %msg%n%throwable</pattern>
+        </PatternLayout>
+      </Console>
+    </SpringProfile>
+    <SpringProfile name="dev | staging | prod">
+      <RollingRandomAccessFile name="RollingRandomAccessFile" append="true"
+                               fileName="./logs/log.txt" filePattern="./logs/log-%d{yyyy-MM-dd}-%i.txt.zip">
+        <PatternLayout>
+          <pattern>%date{ISO8601} %highlight{%-5level}[PID:%pid{n/a}] [%style{THREAD: %threadName}{bright,blue}] %style{%class}{bright,yellow}: %msg%n%throwable</pattern>
+          <!--<pattern>%d %p %C{1.} [%t] %m%n</pattern>-->
+        </PatternLayout>
+        <Policies>
+          <SizeBasedTriggeringPolicy size="1 MB"/>
+        </Policies>
+        <DefaultRolloverStrategy min="1" max="20"/>
+      </RollingRandomAccessFile>
+    </SpringProfile>
+  </Appenders>
+
+  <Loggers>
+    <!-- LOG everything at INFO level -->
+    <Root level="info">
+      <AppenderRef ref="Console"/>
+      <AppenderRef ref="RollingRandomAccessFile"/>
+    </Root>
+
+    <!-- If appender(s) are not defined then root appender(s) will be used. -->
+    <!-- If any appender defined here is also defined in root then msg will be logged twice. -->
+    <Logger name="com.edtech" level="trace"/>
+  </Loggers>
+
+</Configuration>
