@@ -62,8 +62,21 @@ jobs:
 #          username: ${{github.actor}}
 #          password: ${{secrets.GITHUB_TOKEN}}
 
+      - name: Setting environment variables..
+        run: |
+          echo "AWS_REGION=us-west-2" >> $GITHUB_ENV
+          echo "AWS_SG_NAME=jawad-security-group-postgres" >> $GITHUB_ENV
+
+      - name: Add Github Actions IP to Security group
+        run: |
+          aws rds authorize-db-security-group-ingress --db-security-group-name ${{ env.AWS_SG_NAME }} --protocol tcp --port 5432 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
+
       - name: Build
-        run: mvn --activate-profiles cicd --batch-mode clean deploy
+        run: mvn --activate-profiles cicd --batch-mode clean test
         # The 'deploy' goal will need to authentication to GitHub packages to be able to push the docker image.
         # We will make use of the GitHub provided secret 'secrets.GITHUB_TOKEN' to do that. Note that in this context
         # (i.e. a repository workflow) the token that secrets.GITHUB_TOKEN refers to is a repository level token
@@ -91,6 +104,15 @@ jobs:
         #         run: echo "trigger clean deploy and release? i think release should be via tag that is aplied manually to main branch head commit.
         #        once tag is applied then an on release tag workflow should trigger release goal. which should not only bump versions but also deploy to prod.
         #        before release,
+
+      - name: Remove Github Actions IP from security group
+        run: |
+          aws rds revoke-db-security-group-ingress --db-security-group-name ${{ env.AWS_SG_NAME }} --protocol tcp --port 5432 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
+        if: always()
 
       - name: done
         run: echo "Done!"
