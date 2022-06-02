@@ -62,19 +62,20 @@ jobs:
 #          username: ${{github.actor}}
 #          password: ${{secrets.GITHUB_TOKEN}}
 
-      - name: Setting environment variables..
+      - name: Setup environment for running AWS CLI commands.
         run: |
           echo "AWS_REGION=us-west-2" >> $GITHUB_ENV
           echo "AWS_SG_ID=sg-0ec7fca94a3b64db3" >> $GITHUB_ENV
 
-      - name: Public IP
+      # This step retrieves the public IPv4 address of this Runner and stores it in the ouput of this step.
+      - name: Retrieve public IPv4 address of the runner
         id: ip
         uses: haythem/public-ip@v1.2
       
-      - name: done
-        run: echo "ip  ${{ steps.ip.outputs.ipv4 }}"
-
-      - name: Add Github Actions IP to Security group
+      # This step adds an inbound rule to the Security Group of our PostGre RDS on AWS so that AWS allows this Github Runner
+      # to connect to our public PostGre RDS instance. The inbound rule that is created grants the access permission to the
+      # Runner by allowing its IPv4 address to connect to the DB.
+      - name: Allow this Github Runner to connect to the public PostGre RDS on AWS.
         run: |
           aws ec2 authorize-security-group-ingress --group-id sg-0ec7fca94a3b64db3 --protocol tcp --port 5432 --cidr ${{ steps.ip.outputs.ipv4 }}/32
         env:
@@ -102,16 +103,18 @@ jobs:
         # to merge user. mark it as high priority. next level would be to create a bug branch (with bug dev as
         # owner i.e. owner of github.head_ref will be set to bug dev) and then reset the head of dev branch (so
         # it becomes stable again) and create issue and assign
-        #        to bug dev. auto branch creation makes sense here if we have to reset dev head to prev commit bc then if we
-        #        dont create branch then that commit
-        #        will be lost and would have to manually use ref db to create branch with that commit as its head.
+        # to bug dev. auto branch creation makes sense here if we have to reset dev head to prev commit bc then if we
+        # dont create branch then that commit
+        # will be lost and would have to manually use ref db to create branch with that commit as its head.
         #
-        #        since we dont have develop branch yet so Here we should first do things like maven clean build run all tests
-        #        on main then deploy to development
-        #         run: echo "trigger clean deploy and release? i think release should be via tag that is aplied manually to main branch head commit.
-        #        once tag is applied then an on release tag workflow should trigger release goal. which should not only bump versions but also deploy to prod.
-        #        before release,
+        # since we dont have develop branch yet so Here we should first do things like maven clean build run all tests
+        # on main then deploy to development
+        # run: echo "trigger clean deploy and release? i think release should be via tag that is aplied manually to main branch head commit.
+        # once tag is applied then an on release tag workflow should trigger release goal. which should not only bump versions but also deploy to prod.
+        # before release,
 
+      # This step remove the inbound rule that was previously added. We do this because the IP address of Runners change so 
+      # there is no point in keeping the permission intact. Infact it can be a security issue.
       - name: Remove Github Actions IP from security group
         run: |
           aws ec2 revoke-security-group-ingress --group-id sg-0ec7fca94a3b64db3 --protocol tcp --port 5432 --cidr ${{ steps.ip.outputs.ipv4 }}/32
