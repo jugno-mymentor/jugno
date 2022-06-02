@@ -83,7 +83,7 @@ jobs:
           AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
 
       - name: Build
-        run: mvn --activate-profiles cicd --batch-mode clean test
+        run: mvn --activate-profiles cicd --batch-mode clean deploy
         # The 'deploy' goal will need to authentication to GitHub packages to be able to push the docker image.
         # We will make use of the GitHub provided secret 'secrets.GITHUB_TOKEN' to do that. Note that in this context
         # (i.e. a repository workflow) the token that secrets.GITHUB_TOKEN refers to is a repository level token
