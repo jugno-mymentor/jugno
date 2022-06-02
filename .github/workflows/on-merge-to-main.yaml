@@ -67,6 +67,10 @@ jobs:
           echo "AWS_REGION=us-west-2" >> $GITHUB_ENV
           echo "AWS_SG_ID=sg-0ec7fca94a3b64db3" >> $GITHUB_ENV
 
+      - name: Public IP
+        id: ip
+        uses: haythem/public-ip@v1.2
+      
       - name: Add Github Actions IP to Security group
         run: |
           aws ec2 authorize-security-group-ingress --group-id sg-0ec7fca94a3b64db3 --protocol tcp --port 5432 --cidr ${{ steps.ip.outputs.ipv4 }}/32
